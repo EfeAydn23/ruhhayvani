@@ -12,6 +12,12 @@ export default async function handler(req, res) {
     if (!message) return res.status(400).json({ error: 'Message required' });
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    // Debug: key'in ilk 10 karakterini logla
+    console.log('API Key exists:', !!apiKey);
+    console.log('API Key prefix:', apiKey ? apiKey.substring(0, 15) : 'NONE');
+    console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('ANTHROPIC')));
+
     if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -30,6 +36,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+    console.log('Anthropic response status:', response.status);
     return res.status(200).json(data);
 
   } catch (error) {
