@@ -400,31 +400,42 @@ function showResult(r){
   document.getElementById('rcontent').innerHTML=`
   <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;width:100%;">
 
-    ${r.motivation ? `
-    <div style="width:100%;background:linear-gradient(135deg,rgba(45,212,191,.08),rgba(124,58,237,.12));border:2px solid var(--teal);padding:1.1rem 1.2rem;position:relative;">
-      <span style="position:absolute;top:-9px;left:14px;background:var(--bg);padding:0 8px;font-size:7px;color:var(--teal);letter-spacing:2px;">✦ EVREN SENİN İÇİN KONUŞUYOR</span>
-      <p style="font-size:clamp(7px,1.3vw,9px);color:#c8f0ec;line-height:3.2;text-align:center;font-style:italic;">${r.motivation}</p>
+    <div id="share-card" style="width:100%;display:flex;flex-direction:column;gap:.9rem;background:#08091a;padding:.8rem;border:2px solid rgba(124,58,237,.3);">
+
+      <div style="text-align:center;font-size:8px;color:var(--gold);letter-spacing:2px;">✨ RUH HAYVANIM KİM? ✨</div>
+
+      ${r.motivation ? `
+      <div style="width:100%;background:linear-gradient(135deg,rgba(45,212,191,.08),rgba(124,58,237,.12));border:2px solid var(--teal);padding:1.1rem 1.2rem;position:relative;">
+        <span style="position:absolute;top:-9px;left:14px;background:#08091a;padding:0 8px;font-size:7px;color:var(--teal);letter-spacing:2px;">✦ EVREN SENİN İÇİN KONUŞUYOR</span>
+        <p style="font-size:clamp(7px,1.3vw,9px);color:#c8f0ec;line-height:3.2;text-align:center;font-style:italic;">${r.motivation}</p>
+      </div>
+      ` : ''}
+
+      <div style="font-size:7px;color:var(--teal);letter-spacing:2px;text-align:center;">— ${curPair.theme} —</div>
+
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;">
+        <div class="trait">${(r.traits||[]).join(' · ')}</div>
+      </div>
+
+      <div class="divl"></div>
+
+      <div class="pbox" style="text-align:left;">
+        <p class="dim" style="margin-bottom:.6rem;color:var(--purple-l);">NEDEN BU ÇİFT?</p>
+        <p class="dim" style="line-height:2.8;">${r.reason}</p>
+      </div>
+
+      <div class="pbox" style="background:rgba(251,191,36,.04);border-color:var(--gold);text-align:left;">
+        <p class="dim" style="margin-bottom:.6rem;color:var(--gold);">RUH HAYVANLARIN MESAJI</p>
+        <p class="sub" style="border-left:3px solid var(--gold);padding-left:.8rem;line-height:3;">${r.message}</p>
+      </div>
+
+      <div style="font-size:6px;color:var(--dim);text-align:center;">ruhhayvanikim.netlify.app</div>
+
     </div>
+
+    <button onclick="shareResult()" style="font-family:'Press Start 2P',monospace;font-size:8px;padding:.7rem 1.4rem;background:#1e3a5f;border:2px solid #4488cc;color:#88ccff;cursor:pointer;width:100%;">📸 &nbsp;SONUCU KAYDET / PAYLAŞ</button>
+
     <div class="divl"></div>
-    ` : ''}
-
-    <div style="font-size:7px;color:var(--teal);letter-spacing:2px;">— ${curPair.theme} —</div>
-
-    <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;">
-      <div class="trait">${(r.traits||[]).join(' · ')}</div>
-    </div>
-
-    <div class="divl"></div>
-
-    <div class="pbox" style="text-align:left;">
-      <p class="dim" style="margin-bottom:.6rem;color:var(--purple-l);">NEDEN BU ÇİFT?</p>
-      <p class="dim" style="line-height:2.8;">${r.reason}</p>
-    </div>
-
-    <div class="pbox" style="background:rgba(251,191,36,.04);border-color:var(--gold);text-align:left;">
-      <p class="dim" style="margin-bottom:.6rem;color:var(--gold);">RUH HAYVANLARIN MESAJI</p>
-      <p class="sub" style="border-left:3px solid var(--gold);padding-left:.8rem;line-height:3;">${r.message}</p>
-    </div>
 
     <div style="font-size:7px;color:var(--dim);text-align:center;line-height:2.5;">HANGİ YOL SENİ ÇAĞIRIYOR?</div>
 
@@ -444,7 +455,6 @@ function showResult(r){
     </div>
 
     <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;width:100%;">
-      <button class="btn" onclick="shareResult()" style="font-size:8px;padding:.7rem 1.1rem;background:#1e3a5f;border:2px solid #4488cc;color:#88ccff;">📸 &nbsp;SONUCU PAYLAŞ</button>
       <button class="btn btn-info" onclick="go('s-info')" style="font-size:8px;padding:.7rem 1.1rem;">📖 &nbsp;REHBER</button>
       <button class="btn btn-gold" onclick="reset()" style="font-size:8px;padding:.7rem 1.1rem;">✨ &nbsp;YENİ HİSLER</button>
     </div>
@@ -471,23 +481,33 @@ function chooseAndPlay(mode){
 function reset(){document.getElementById('txt').value='';document.getElementById('cc').textContent='0/500';go('s-intro');}
 
 async function shareResult(){
-  const el=document.getElementById('rcontent');
-  if(!el)return;
+  const el=document.getElementById('share-card');
+  if(!el){alert('Paylaşılacak içerik bulunamadı.');return;}
   try{
-    // html2canvas ile resim oluştur
     const canvas=await html2canvas(el,{
       backgroundColor:'#08091a',
       scale:2,
       useCORS:true,
-      logging:false
+      logging:false,
+      windowWidth:600
     });
-    const link=document.createElement('a');
-    link.download='ruh-hayvanim.png';
-    link.href=canvas.toDataURL('image/png');
-    link.click();
+    // Mobilde Web Share API dene, yoksa indir
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],'ruh-hayvanim.png',{type:'image/png'})]})){
+      await navigator.share({
+        title:'Ruh Hayvanım Kim?',
+        text:'Ruh hayvanımı keşfettim! ✨',
+        files:[new File([blob],'ruh-hayvanim.png',{type:'image/png'})]
+      });
+    } else {
+      const link=document.createElement('a');
+      link.download='ruh-hayvanim.png';
+      link.href=canvas.toDataURL('image/png');
+      link.click();
+    }
   }catch(e){
-    // Fallback: Web Share API
-    alert('Sonucunun ekran görüntüsünü alıp paylaşabilirsin! 📸');
+    console.error(e);
+    alert('Kaydedilemedi. Ekran görüntüsü alabilirsin! 📸');
   }
 }
 
