@@ -13,25 +13,27 @@ exports.handler = async function(event) {
 
   try {
     const { system, message } = JSON.parse(event.body);
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ error: 'no key' }) };
 
     const body = JSON.stringify({
-      system_instruction: { parts: [{ text: system || '' }] },
-      contents: [{ role: 'user', parts: [{ text: message }] }],
-      generationConfig: { maxOutputTokens: 1200, temperature: 1.0 }
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1200,
+      system: system || '',
+      messages: [{ role: 'user', content: message }],
     });
 
     return new Promise((resolve) => {
-      const path = `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const options = {
-        hostname: 'generativelanguage.googleapis.com',
-        path,
+        hostname: 'api.anthropic.com',
+        path: '/v1/messages',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
         },
       };
 
@@ -39,18 +41,7 @@ exports.handler = async function(event) {
         let data = '';
         res.on('data', chunk => { data += chunk; });
         res.on('end', () => {
-          console.log('Gemini raw:', data.substring(0, 500));
-          try {
-            const geminiResp = JSON.parse(data);
-            // Anthropic formatına çevir ki HTML değişmesin
-            const text = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            const anthropicFormat = {
-              content: [{ type: 'text', text }]
-            };
-            resolve({ statusCode: 200, headers, body: JSON.stringify(anthropicFormat) });
-          } catch(e) {
-            resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'parse error' }) });
-          }
+          resolve({ statusCode: 200, headers, body: data });
         });
       });
 
