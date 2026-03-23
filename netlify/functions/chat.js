@@ -41,7 +41,14 @@ exports.handler = async function(event, context) {
         let data = '';
         res.on('data', chunk => { data += chunk; });
         res.on('end', () => {
-          resolve({ statusCode: 200, headers, body: data });
+          console.log('Status:', res.statusCode);
+          console.log('Response:', data.substring(0, 300));
+          try {
+            const parsed = JSON.parse(data);
+            resolve({ statusCode: 200, headers, body: JSON.stringify(parsed) });
+          } catch(e) {
+            resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'parse error', raw: data.substring(0, 200) }) });
+          }
         });
       });
 
