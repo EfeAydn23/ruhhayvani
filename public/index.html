@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>✨ Ruh Hayvanın Kim?</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--bg:#08091a;--purple:#7c3aed;--purple-l:#a78bfa;--gold:#fbbf24;--teal:#2dd4bf;--text:#e2d9f3;--dim:#7c6ea8;}
@@ -369,8 +370,8 @@ async function submit(){
   const txt=document.getElementById('txt').value.trim();
   if(txt.length<4){alert('Lütfen en az 4 karakter yaz!');return;}
   go('s-load');startLoad();
-  const sys=`Sen hem mistik bir ruh hayvanı oraclısı hem de anlayışlı, sıcak bir rehbersin. Kullanıcının duygularını ve yaşadığı durumu derin biçimde oku. SADECE JSON yanıt ver, markdown yok:
-{"pair":"power","element":"Ateş","traits":["Güçlü","Cesur","Tutkulu"],"reason":"Neden bu çift seçildi, 2-3 cümle mistik dil.","message":"Ben senin... ile başla, 2-3 cümle, her iki hayvandan konuşur gibi.","motivation":"Kullanıcının duygusal durumuna özel, mistik ve samimi bir motivasyon mesajı. Eğer zorlu bir dönemdeyse bunu hissettir ve ona güç ver. Eğer mutluysa bu enerjiyi kutla. 3-4 cümle olsun. Sen değerlisin ya da Unutma gibi klişe başlangıçlardan kaçın. Doğrudan kişinin hissine doku, sanki yıldızlar ona konuşuyor gibi."}
+  const sys=`Sen ruhların dostusun — mistik ama aynı zamanda samimi, anlayışlı ve hafif mizahlı birisin. Sanki yıllardır tanıdığın bir dost gibi konuş; ne fazla ciddi ne fazla şakacı. Kullanıcının hissini gerçekten anla, ona göre cevap ver. SADECE JSON yanıt ver, markdown yok:
+{"pair":"power","element":"Ateş","traits":["Güçlü","Cesur","Tutkulu"],"reason":"Neden bu çift seçildi, 2-3 cümle. Mistik ama samimi, sanki dost anlatıyor gibi.","message":"Ben senin... ile başla, 2-3 cümle. Her iki hayvandan konuşur gibi, sıcak ve kişisel.","motivation":"Kullanıcının durumuna özel 3-4 cümle. Zorlu bir dönemdeyse bunu hissettir ama ağır olmadan — hafif bir dokunuşla güç ver. Mutluysa bu enerjiyi kutla ve biraz eğlen. Klişelerden kaçın (Sen değerlisin, Unutma gibi). Sanki en iyi dost konuşuyor: anlayışlı, samimi, bazen güldüren ama her zaman gerçek."}
 
 Çiftler ve duygu rehberi:
 - "power" (Kaplan & Kartal): güç, cesaret, tutku, öfke, liderlik, kararlılık, rekabet
@@ -379,9 +380,9 @@ async function submit(){
 - "wise"  (Tilki & Baykuş): zeka, sezgi, gizem, strateji, esneklik, gece enerjisi
 - "peace" (Ceylan & Anka Kuşu): huzur, zarafet, yeniden doğuş, umut, özgürlük, iyileşme`;
   try{
-    const res=await fetch("/.netlify/functions/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,message:txt})});
+    const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,message:txt})});
     const data=await res.json();
-    if(!data.content||!data.content[0]){throw new Error('API yanıt vermedi: '+JSON.stringify(data).substring(0,200));}
+    if(!data.content||!data.content[0]){throw new Error('API yanıt vermedi: '+(data.error||JSON.stringify(data)));}
     const r=JSON.parse(data.content[0].text.replace(/```json\n?|```/g,'').trim());
     stopLoad();showResult(r);
   }catch(e){
@@ -443,6 +444,7 @@ function showResult(r){
     </div>
 
     <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;width:100%;">
+      <button class="btn" onclick="shareResult()" style="font-size:8px;padding:.7rem 1.1rem;background:#1e3a5f;border:2px solid #4488cc;color:#88ccff;">📸 &nbsp;SONUCU PAYLAŞ</button>
       <button class="btn btn-info" onclick="go('s-info')" style="font-size:8px;padding:.7rem 1.1rem;">📖 &nbsp;REHBER</button>
       <button class="btn btn-gold" onclick="reset()" style="font-size:8px;padding:.7rem 1.1rem;">✨ &nbsp;YENİ HİSLER</button>
     </div>
@@ -467,6 +469,27 @@ function chooseAndPlay(mode){
 }
 
 function reset(){document.getElementById('txt').value='';document.getElementById('cc').textContent='0/500';go('s-intro');}
+
+async function shareResult(){
+  const el=document.getElementById('rcontent');
+  if(!el)return;
+  try{
+    // html2canvas ile resim oluştur
+    const canvas=await html2canvas(el,{
+      backgroundColor:'#08091a',
+      scale:2,
+      useCORS:true,
+      logging:false
+    });
+    const link=document.createElement('a');
+    link.download='ruh-hayvanim.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    // Fallback: Web Share API
+    alert('Sonucunun ekran görüntüsünü alıp paylaşabilirsin! 📸');
+  }
+}
 
 /* ══════════════════════════════════
    GAME ENGINE
