@@ -39,6 +39,7 @@ exports.handler = async function(event) {
         let data = '';
         res.on('data', chunk => { data += chunk; });
         res.on('end', () => {
+          console.log('Gemini raw:', data.substring(0, 500));
           try {
             const geminiResp = JSON.parse(data);
             // Anthropic formatına çevir ki HTML değişmesin
