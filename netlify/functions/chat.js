@@ -1,6 +1,6 @@
 const https = require('https');
 
-exports.handler = async function(event, context) {
+exports.handler = async function(event) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -13,27 +13,25 @@ exports.handler = async function(event, context) {
 
   try {
     const { system, message } = JSON.parse(event.body);
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ error: 'no key' }) };
 
     const body = JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1200,
-      system: system || '',
-      messages: [{ role: 'user', content: message }],
+      system_instruction: { parts: [{ text: system || '' }] },
+      contents: [{ role: 'user', parts: [{ text: message }] }],
+      generationConfig: { maxOutputTokens: 1200, temperature: 1.0 }
     });
 
     return new Promise((resolve) => {
+      const path = `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       const options = {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
+        hostname: 'generativelanguage.googleapis.com',
+        path,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
         },
       };
 
@@ -41,13 +39,16 @@ exports.handler = async function(event, context) {
         let data = '';
         res.on('data', chunk => { data += chunk; });
         res.on('end', () => {
-          console.log('Status:', res.statusCode);
-          console.log('Response:', data.substring(0, 300));
           try {
-            const parsed = JSON.parse(data);
-            resolve({ statusCode: 200, headers, body: JSON.stringify(parsed) });
+            const geminiResp = JSON.parse(data);
+            // Anthropic formatına çevir ki HTML değişmesin
+            const text = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const anthropicFormat = {
+              content: [{ type: 'text', text }]
+            };
+            resolve({ statusCode: 200, headers, body: JSON.stringify(anthropicFormat) });
           } catch(e) {
-            resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'parse error', raw: data.substring(0, 200) }) });
+            resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'parse error' }) });
           }
         });
       });
